@@ -3,9 +3,9 @@ from Option import Option
 
 menu_main = Menu('main', 'Please select one of the following options:', [
     Option("Add", "add(sess)"),
-    Option("List", "list_objects(sess)"),
     Option("Delete", "delete(sess)"),
     Option("Update", "update(sess)"),
+    Option("List", "list_objects(sess)"),
     Option("Reports", "reports(sess)"),
     Option("Boilerplate Data", "boilerplate(sess)"),
     Option("Commit", "sess.commit()"),
@@ -28,18 +28,19 @@ delete_menu = Menu('delete', 'Please indicate what you want to delete:', [
     Option("Exit", "pass")
 ])
 
-list_menu = Menu('list', 'Please indicate what you want to list:', [
-    Option("All Parts", "list_parts(sess)"),
-    Option("Assemblies", "list_assemblies(sess)"),
-    Option("Piece Parts", "list_piece_parts(sess)"),
-    Option("Vendors", "list_vendors(sess)"),
-    Option("Compositions", "list_compositions(sess)"),
-    Option("Exit", "pass")
-])
-
 update_menu = Menu('update', 'Please indicate what you want to update:', [
     Option("Part Name", "update_part(sess)"),
     Option("Composition Quantity", "update_composition(sess)"),
+    Option("Exit", "pass")
+])
+
+list_menu = Menu('list', 'Please indicate what you want to list:', [
+    Option("Parts", "list_parts(sess)"),
+    Option("Vendors", "list_vendors(sess)"),
+    Option("Compositions", "list_compositions(sess)"),
+    Option("Report a Vendor", "report_vendor(sess)"),
+    Option("Report a Part", "report_part(sess)"),
+    Option("Report a Composition", "report_composition(sess)"),
     Option("Exit", "pass")
 ])
 
