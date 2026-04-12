@@ -4,3 +4,4 @@ venv/
 .idea/
 *.db
 .DS_Store
+config.ini
