@@ -50,7 +50,6 @@ report_menu = Menu('reports', 'Please select a report:', [
     Option("Exit", "pass")
 ])
 
-# A menu to prompt for the amount of logging information to go to the console.
 debug_select = Menu('debug select', 'Please select a debug level:', [
     Option("Informational", "logging.INFO"),
     Option("Debug", "logging.DEBUG"),

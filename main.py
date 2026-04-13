@@ -2,8 +2,6 @@ import logging
 from menu_definitions import menu_main, add_menu, delete_menu, list_menu, update_menu, report_menu, debug_select
 from db_connection import engine, Session
 from orm_base import metadata
-# Note that until you import your SQLAlchemy declarative classes, such as Part, Python
-# will not execute that code, and SQLAlchemy will be unaware of the mapped table.
 from Vendor import Vendor
 from Part import Part
 from Assembly import Assembly
@@ -50,7 +48,7 @@ def reports(sess: Session):
         exec(report_action)
 
 
-# -------------------- ADD FUNCTIONS --------------------
+# ADD FUNCTIONS
 
 def add_vendor(sess: Session):
     """
@@ -146,7 +144,7 @@ def add_component(sess: Session):
     sess.flush()
 
 
-# -------------------- SELECT FUNCTIONS --------------------
+# SELECT FUNCTIONS
 
 def select_vendor(sess: Session) -> Vendor:
     """
@@ -208,7 +206,7 @@ def select_assembly(sess: Session) -> Assembly:
     return return_assembly
 
 
-# -------------------- DELETE FUNCTIONS --------------------
+# DELETE FUNCTIONS
 
 def delete_vendor(sess: Session):
     """
@@ -261,7 +259,7 @@ def delete_component(sess: Session):
     assembly.remove_component(component)
 
 
-# -------------------- UPDATE FUNCTIONS --------------------
+# UPDATE FUNCTIONS
 
 def update_part(sess: Session):
     """
@@ -306,7 +304,7 @@ def update_composition(sess: Session):
             print(f"Quantity updated from {old_qty} to {new_qty}.")
 
 
-# -------------------- LIST FUNCTIONS --------------------
+# LIST FUNCTIONS
 
 def list_parts(sess: Session):
     """
@@ -396,7 +394,7 @@ def report_composition(sess: Session):
         print(f"Quantity: {usage.quantity}")
 
 
-# -------------------- REPORT FUNCTIONS --------------------
+# REPORT FUNCTIONS     
 
 def hierarchy_report(sess: Session):
     """
@@ -432,35 +430,37 @@ def max_components_report(sess: Session):
     """
     List each assembly part number, part name, and number of component parts,
     but only for those assemblies that have the greatest number of component parts.
-    :param sess: The connection to the database.
-    :return:     None
     """
-    from sqlalchemy import func
-    # Count components for each assembly.
-    component_counts = sess.query(
-        Usage.assembliesPartsNumber,
-        func.count(Usage.partsNumber).label('component_count')
-    ).group_by(Usage.assembliesPartsNumber).all()
-
-    if len(component_counts) == 0:
-        print("No assemblies with components found.")
+    # Get all assemblies using standard querying
+    assemblies = sess.query(Assembly).all()
+    
+    if not assemblies:
+        print("No assemblies found.")
         return
 
-    # Find the maximum count.
-    max_count = max(row.component_count for row in component_counts)
+    # First pass: find what the maximum number of components is
+    max_count = 0
+    for assembly in assemblies:
+        # Standard .count() to find how many components this assembly has
+        comp_count = sess.query(Usage).filter(Usage.assembliesPartsNumber == assembly.partsNumber).count()
+        if comp_count > max_count:
+            max_count = comp_count
+
+    if max_count == 0:
+        print("No components found in any assemblies.")
+        return
+
     print(f"\nAssemblies with the most component parts ({max_count} components):")
     print("-" * 60)
 
-    # List all assemblies that have the max count.
-    for row in component_counts:
-        if row.component_count == max_count:
-            assembly = sess.query(Assembly).filter(
-                Assembly.partsNumber == row.assembliesPartsNumber).first()
-            print(f"  {assembly.partsNumber} - {assembly.name}: "
-                  f"{row.component_count} component(s)")
+    # Second pass: print all assemblies that tie for the max count
+    for assembly in assemblies:
+        comp_count = sess.query(Usage).filter(Usage.assembliesPartsNumber == assembly.partsNumber).count()
+        if comp_count == max_count:
+            print(f"  {assembly.partsNumber} - {assembly.name}: {comp_count} component(s)")
 
 
-# -------------------- BOILERPLATE DATA --------------------
+# BOILERPLATE DATA
 
 def boilerplate(sess: Session):
     """
@@ -470,7 +470,7 @@ def boilerplate(sess: Session):
     :param sess: The session that's open.
     :return:     None
     """
-    # ---- Vendors ----
+    # Vendors
     helical = Vendor('Helical International')
     plates = Vendor('Plates R Us')
     wholey = Vendor('Wholey Rollers')
@@ -488,7 +488,7 @@ def boilerplate(sess: Session):
                   unharnessed, get_grip, telegraph, radio, starbucks, michaels, osh])
     sess.flush()
 
-    # ---- Assemblies (parts we build ourselves) ----
+    # Assemblies
     motorcycle = Assembly('0', 'Motorcycle')
     engine = Assembly('1', 'Engine')
     transmission = Assembly('1.1', 'Transmission')
@@ -507,7 +507,7 @@ def boilerplate(sess: Session):
                   battery, starter, stator, frame, handlebars, throttle, seat, headlight])
     sess.flush()
 
-    # ---- Piece Parts (parts we purchase from vendors) ----
+    # Piece Parts
     springs = PiecePart('1.1.1.1', 'Springs', helical)
     torque = PiecePart('1.1.1.2', 'Torque', plates)
     rollers = PiecePart('1.1.2.1', 'Rollers', wholey)
@@ -528,26 +528,26 @@ def boilerplate(sess: Session):
                   foam, fabric, bulb, headlight_wiring])
     sess.flush()
 
-    # ---- Usages (composition: assembly -> component with quantity) ----
+    # Usages
     # Motorcycle components
     sess.add(Usage(motorcycle, engine, 1))
     sess.add(Usage(motorcycle, frame, 1))
     # Engine components
     sess.add(Usage(engine, transmission, 1))
-    sess.add(Usage(engine, head, 2))      # 2 heads
+    sess.add(Usage(engine, head, 2))      
     sess.add(Usage(engine, battery, 1))
     # Transmission components
     sess.add(Usage(transmission, clutch, 1))
     sess.add(Usage(transmission, variator, 1))
     sess.add(Usage(transmission, belt, 1))
     # Clutch components
-    sess.add(Usage(clutch, springs, 4))   # 4 springs
+    sess.add(Usage(clutch, springs, 4))   
     sess.add(Usage(clutch, torque, 1))
     # Variator components
-    sess.add(Usage(variator, rollers, 5))  # 5 rollers
+    sess.add(Usage(variator, rollers, 5))  
     # Head components
-    sess.add(Usage(head, pistons, 2))     # 2 pistons
-    sess.add(Usage(head, rings, 2))       # 2 rings
+    sess.add(Usage(head, pistons, 2))     
+    sess.add(Usage(head, rings, 2))       
     # Battery components
     sess.add(Usage(battery, ecu, 1))
     sess.add(Usage(battery, starter, 1))
@@ -560,7 +560,7 @@ def boilerplate(sess: Session):
     sess.add(Usage(frame, seat, 1))
     sess.add(Usage(frame, headlight, 1))
     # Handlebars components
-    sess.add(Usage(handlebars, grips, 2))  # 2 grips
+    sess.add(Usage(handlebars, grips, 2))  
     sess.add(Usage(handlebars, throttle, 1))
     sess.add(Usage(handlebars, kill_switch, 1))
     # Throttle components
